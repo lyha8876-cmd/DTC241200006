@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 $host = 'db';
 $db   = 'pos_db';
 $user = 'pos_user';
@@ -17,9 +19,6 @@ try {
     die("Kết nối CSDL thất bại: " . $e->getMessage());
 }
 
-$message = "";
-
-// Xử lý tạo đơn hàng (bán hàng - trừ tồn kho)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_order') {
     $prod_id = (int)$_POST['product_id'];
     $qty = (int)$_POST['quantity'];
@@ -35,13 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         $updateStmt = $pdo->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
         $updateStmt->execute([$qty, $prod_id]);
-        $message = "Thanh toán đơn hàng thành công! Đã trừ $qty sản phẩm khỏi kho.";
+        $_SESSION['message'] = "Thanh toán thành công! Đã trừ $qty sản phẩm.";
     } else {
-        $message = "Lỗi: Số lượng tồn kho không đủ hoặc không hợp lệ!";
+        $_SESSION['message'] = "Lỗi: Tồn kho không đủ!";
     }
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit();
 }
 
-// Xử lý thêm sản phẩm mới
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_product') {
     $name = trim($_POST['name']);
     $price = (float)$_POST['price'];
@@ -49,8 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (!empty($name) && $price > 0 && $stock >= 0) {
         $stmt = $pdo->prepare("INSERT INTO products (name, price, stock) VALUES (?, ?, ?)");
         $stmt->execute([$name, $price, $stock]);
-        $message = "Thêm sản phẩm mới thành công!";
+        $_SESSION['message'] = "Thêm sản phẩm thành công!";
     }
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit();
+}
+
+$message = "";
+if (isset($_SESSION['message'])) {
+    $message = $_SESSION['message'];
+    unset($_SESSION['message']);
 }
 
 $products = $pdo->query("SELECT * FROM products ORDER BY id DESC")->fetchAll();
@@ -70,10 +78,9 @@ $orders = $pdo->query("SELECT o.id, p.name as product_name, o.quantity, o.total_
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         input, select, button { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 12px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px; }
         button { background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #1d4ed8; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f1f5f9; color: #334155; }
+        th { background: #f1f5f9; }
     </style>
 </head>
 <body>
