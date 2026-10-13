@@ -73,10 +73,10 @@ services:
     container_name: pos_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: RootSecurePassword2026!
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: pos_db
       MYSQL_USER: pos_user
-      MYSQL_PASSWORD: PosSecurePass2026!
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
