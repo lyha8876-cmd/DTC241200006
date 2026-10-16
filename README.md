@@ -94,3 +94,13 @@ Tại giao diện Grafana Explore, nhập câu lệnh:
 
 Đoạn mã
 {job="docker-logs"} !~ "grafana" |= "GET /.env"
+
+
+# Query 1: Lọc log các truy vấn phát hiện tấn công quét file nhạy cảm
+{job="docker-logs"} !~ "grafana" |= "GET /.env"
+
+# Query 2: Lọc tất cả các truy vấn bị lỗi 404 (dấu hiệu dò quét trang web)
+{job="docker-logs"} |~ "HTTP/1.1\" 404"
+
+# Query 3: Thống kê tần suất truy cập theo container Nginx
+{job="docker-logs", container_name="pos_nginx"}
