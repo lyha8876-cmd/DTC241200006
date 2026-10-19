@@ -9,20 +9,20 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-    container_name: pos_app
+    container_name: pos_app_v2
     restart: unless-stopped
     networks:
       - frontend_net
       - backend_net
     environment:
       - DB_HOST=db
+      - DB_NAME=pos_db
       - DB_USER=pos_user
       - DB_PASSWORD=PosSecurePass2026!
-      - DB_NAME=pos_db
 
   db:
     image: mysql:8.0
-    container_name: pos_db
+    container_name: pos_db_v2
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
     networks:
@@ -33,12 +33,15 @@ services:
       - MYSQL_USER=pos_user
       - MYSQL_PASSWORD=PosSecurePass2026!
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data_v2:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: pos_phpmyadmin
+    container_name: pos_phpmyadmin_v2
     restart: unless-stopped
+    ports:
+      - "8081:80"
     networks:
       - frontend_net
       - backend_net
@@ -49,24 +52,24 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: pos_nginx
+    container_name: pos_nginx_v2
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     networks:
       - frontend_net
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./nginx/ssl:/etc/nginx/ssl
-      - nginx_logs:/var/log/nginx
+      - nginx_logs_v2:/var/log/nginx
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: pos_prometheus
+    container_name: pos_prometheus_v2
     restart: unless-stopped
     ports:
-      - "19090:9090"
+      - "19091:9090"
     networks:
       - frontend_net
       - backend_net
@@ -75,10 +78,10 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
-    container_name: pos_cadvisor
+    container_name: pos_cadvisor_v2
     restart: unless-stopped
     ports:
-      - "8081:8080"
+      - "8082:8080"
     networks:
       - backend_net
     volumes:
@@ -89,19 +92,19 @@ services:
 
   node_exporter:
     image: prom/node-exporter:latest
-    container_name: pos_node_exporter
+    container_name: pos_node_exporter_v2
     restart: unless-stopped
     ports:
-      - "9100:9100"
+      - "9101:9100"
     networks:
       - backend_net
 
   loki:
     image: grafana/loki:latest
-    container_name: pos_loki
+    container_name: pos_loki_v2
     restart: unless-stopped
     ports:
-      - "3100:3100"
+      - "3101:3100"
     networks:
       - backend_net
     volumes:
@@ -109,31 +112,31 @@ services:
 
   promtail:
     image: grafana/promtail:latest
-    container_name: pos_promtail
+    container_name: pos_promtail_v2
     user: root
     command: -config.file=/etc/promtail/config.yaml
     restart: unless-stopped
     networks:
       - backend_net
     volumes:
-      - /home/ubuntu/DTC241200006/promtail/config.yaml:/etc/promtail/config.yaml
-      - nginx_logs:/var/log/nginx:ro
+      - ./promtail/config.yaml:/etc/promtail/config.yaml
+      - nginx_logs_v2:/var/log/nginx:ro
 
   grafana:
     image: grafana/grafana:latest
-    container_name: pos_grafana
+    container_name: pos_grafana_v2
     restart: unless-stopped
     ports:
-      - "13000:3000"
+      - "13001:3000"
     networks:
       - frontend_net
       - backend_net
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
-      - grafana_data:/var/lib/grafana
+      - grafana_data_v2:/var/lib/grafana
 
 volumes:
-  db_data:
-  nginx_logs:
-  grafana_data:
+  db_data_v2:
+  nginx_logs_v2:
+  grafana_data_v2:
